@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calculadora hemodinámica no invasiva por ecocardiografía</title>
+<style>
+  :root{
+    --bg:#f7f7f8; --card:#fff; --text:#111827; --muted:#6b7280; --line:#e5e7eb;
+    --warn:#b45309; --danger:#b91c1c; --ok:#047857; --blue:#1d4ed8; --violet:#6d28d9;
+  }
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:var(--bg);color:var(--text)}
+  header{padding:24px 18px 10px;max-width:1220px;margin:auto}
+  h1{font-size:1.55rem;margin:0 0 6px} h2{font-size:1.15rem;margin:0 0 12px} h3{font-size:1rem;margin:14px 0 8px}
+  p{line-height:1.45} small{color:var(--muted)}
+  .wrap{max-width:1220px;margin:auto;padding:12px 18px 32px;display:grid;grid-template-columns:430px 1fr;gap:18px}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}.sticky{position:static!important}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .sticky{position:sticky;top:8px;align-self:start;max-height:calc(100vh - 16px);overflow:auto}
+  label{display:block;font-size:.88rem;font-weight:600;margin:11px 0 5px}
+  input,select{width:100%;padding:9px 10px;border:1px solid #d1d5db;border-radius:9px;background:#fff;font-size:.95rem}
+  input:focus,select:focus{outline:2px solid #bfdbfe;border-color:#93c5fd}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  @media(max-width:520px){.row3{grid-template-columns:1fr 1fr}.row{grid-template-columns:1fr 1fr}}
+  .hint{font-size:.78rem;color:var(--muted);margin-top:4px;line-height:1.35}
+  button{border:0;border-radius:10px;background:var(--blue);color:#fff;padding:10px 13px;font-weight:700;cursor:pointer;margin-top:10px;width:100%}
+  button.secondary{background:#374151} button.ghost{background:white;color:var(--blue);border:1px solid #bfdbfe}
+  .pill{display:inline-block;padding:3px 8px;border-radius:999px;font-size:.78rem;font-weight:700;margin:2px 6px 2px 0}
+  .pill.ok{background:#d1fae5;color:var(--ok)}.pill.warn{background:#fef3c7;color:var(--warn)}.pill.danger{background:#fee2e2;color:var(--danger)}.pill.info{background:#dbeafe;color:var(--blue)}.pill.violet{background:#ede9fe;color:var(--violet)}
+  table{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:8px}th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#f9fafb}
+  .big{font-size:1.55rem;font-weight:800}.muted{color:var(--muted)}
+  .alert{border-radius:12px;padding:11px 12px;margin:10px 0;font-weight:650;line-height:1.4}.alert.danger{background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca}.alert.warn{background:#fef3c7;color:#78350f;border:1px solid #fde68a}.alert.info{background:#eff6ff;color:#1e3a8a;border:1px solid #bfdbfe}.alert.ok{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+  details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px} summary{cursor:pointer;font-weight:750}
+  .formula{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#f9fafb;border:1px solid var(--line);padding:9px;border-radius:8px;overflow:auto;font-size:.84rem;line-height:1.45}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}
+  @media(max-width:1050px){.metrics{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:520px){.metrics{grid-template-columns:1fr 1fr}}
+  .metric{border:1px solid var(--line);border-radius:12px;padding:11px;background:#fff;min-height:82px}
+  .metric .name{font-size:.77rem;color:var(--muted);font-weight:650}.metric .value{font-size:1.22rem;font-weight:800;margin-top:4px}.metric .sub{font-size:.72rem;color:var(--muted);margin-top:3px}
+  .section-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .copybox{white-space:pre-wrap;background:#f9fafb;border:1px solid var(--line);border-radius:10px;padding:11px;font-size:.88rem;line-height:1.5}
+  .divider{height:1px;background:var(--line);margin:14px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Calculadora hemodinámica no invasiva por ecocardiografía</h1>
+  <p class="muted">Integra Doppler, constantes y medidas del corazón derecho en un único perfil. Herramienta educativa/de apoyo: las estimaciones ecocardiográficas no sustituyen la valoración clínica ni la hemodinámica invasiva cuando esté indicada.</p>
+</header>
+<div class="wrap">
+  <section class="card sticky">
+    <h2>Datos de entrada</h2>
+
+    <details open>
+      <summary>Paciente y constantes</summary>
+      <div class="row3">
+        <div><label>Talla, cm</label><input id="height" type="number" value="170" min="80" max="230" step="1"></div>
+        <div><label>Peso, kg</label><input id="weight" type="number" value="70" min="20" max="300" step="0.1"></div>
+        <div><label>FC, lpm</label><input id="hr" type="number" value="80" min="20" max="250" step="1"></div>
+      </div>
+      <div class="row3">
+        <div><label>PAS, mmHg</label><input id="sbp" type="number" value="110" min="30" max="300" step="1"></div>
+        <div><label>PAD, mmHg</label><input id="dbp" type="number" value="65" min="10" max="200" step="1"></div>
+        <div><label>PAM manual</label><input id="mapManual" type="number" placeholder="auto" min="20" max="250" step="1"></div>
+      </div>
+      <div class="row">
+        <div><label>Ritmo</label><select id="rhythm"><option value="sinus">Sinusal</option><option value="af">FA / ritmo irregular</option></select></div>
+        <div><label>Ventilación presión positiva</label><select id="ppv"><option value="no">No</option><option value="yes">Sí</option></select></div>
+      </div>
+    </details>
+
+    <details open>
+      <summary>Flujo sistémico — LVOT</summary>
+      <div class="row">
+        <div><label>Diámetro LVOT, cm</label><input id="lvotD" type="number" value="2.0" min="0.5" max="4" step="0.01"></div>
+        <div><label>VTI LVOT, cm</label><input id="lvotVTI" type="number" value="18" min="1" max="60" step="0.1"></div>
+      </div>
+      <div class="hint">Área LVOT = π·(D/2)² → VS = área·VTI → GC = VS·FC.</div>
+      <div class="row">
+        <div><label>VTI tras PLR, cm</label><input id="plrVTI" type="number" placeholder="opcional" min="1" max="60" step="0.1"></div>
+        <div><label>N.º ciclos promediados</label><input id="cycles" type="number" value="3" min="1" max="20" step="1"></div>
+      </div>
+    </details>
+
+    <details open>
+      <summary>Presión derecha y pulmonar</summary>
+      <label>Estimación de RAP</label>
+      <select id="rapMode"><option value="ivc">Automática por VCI</option><option value="manual">Manual</option></select>
+      <div class="row3">
+        <div><label>VCI, cm</label><input id="ivcD" type="number" value="1.8" min="0.3" max="5" step="0.1"></div>
+        <div><label>Colapso VCI, %</label><input id="ivcCollapse" type="number" value="60" min="0" max="100" step="1"></div>
+        <div><label>RAP manual</label><input id="rapManual" type="number" value="8" min="0" max="30" step="1"></div>
+      </div>
+      <div class="row3">
+        <div><label>TR Vmax, m/s</label><input id="trv" type="number" value="2.8" min="0" max="7" step="0.01"></div>
+        <div><label>PR telediast., m/s</label><input id="prEnd" type="number" value="1.2" min="0" max="5" step="0.01"></div>
+        <div><label>PR precoz, m/s</label><input id="prEarly" type="number" placeholder="opcional" min="0" max="6" step="0.01"></div>
+      </div>
+      <div class="row3">
+        <div><label>TAPSE, mm</label><input id="tapse" type="number" value="19" min="1" max="40" step="0.1"></div>
+        <div><label>RVOT AccT, ms</label><input id="rvotAccT" type="number" value="110" min="20" max="250" step="1"></div>
+        <div><label>Calidad señal TR</label><select id="trQuality"><option value="good">Buena</option><option value="fair">Aceptable</option><option value="poor">Pobre</option></select></div>
+      </div>
+      <div class="row">
+        <div><label>Obstrucción RVOT/VP</label><select id="rvotObstruction"><option value="no">No</option><option value="yes">Sí / posible</option></select></div>
+        <div><label>IT severa</label><select id="severeTR"><option value="no">No</option><option value="yes">Sí</option></select></div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Flujo pulmonar / shunt — RVOT</summary>
+      <div class="row">
+        <div><label>Diámetro RVOT, cm</label><input id="rvotD" type="number" placeholder="opcional" min="0.5" max="5" step="0.01"></div>
+        <div><label>VTI RVOT, cm</label><input id="rvotVTI" type="number" value="14" min="1" max="60" step="0.1"></div>
+      </div>
+      <div class="hint">Permite estimar Qp/Qs y PVR por Abbas. El diámetro RVOT solo es necesario para Qp/Qs.</div>
+    </details>
+
+    <details>
+      <summary>Presión de llenado izquierda</summary>
+      <div class="row3">
+        <div><label>Onda E mitral, cm/s</label><input id="mitralE" type="number" value="80" min="0" max="250" step="1"></div>
+        <div><label>e′ septal, cm/s</label><input id="eSept" type="number" value="7" min="0" max="30" step="0.1"></div>
+        <div><label>e′ lateral, cm/s</label><input id="eLat" type="number" value="10" min="0" max="40" step="0.1"></div>
+      </div>
+      <label>Situación que limita E/e′ / PCWP estimada</label>
+      <select id="eeCaveat"><option value="no">No conocida</option><option value="yes">Sí — FA, MR/MS relevante, MAC, prótesis, LBBB/estimulación, LVAD, etc.</option></select>
+      <div class="hint">La fórmula numérica de PCWP se muestra como estimación auxiliar; ASE 2025 desaconseja su reporte rutinario aislado.</div>
+    </details>
+
+    <button onclick="calc()">Calcular perfil</button>
+    <button class="secondary" onclick="loadExample()">Cargar ejemplo: bajo gasto + VD</button>
+    <button class="ghost" onclick="clearOptional()">Limpiar campos opcionales</button>
+  </section>
+
+  <section>
+    <div class="card" id="alerts"></div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="section-title"><h2>Perfil hemodinámico</h2><span class="pill info">recalcula automáticamente</span></div>
+      <div class="metrics" id="metrics"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Flujo sistémico y resistencias</h2>
+      <div id="systemicTable"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Hemodinámica pulmonar y VD</h2>
+      <div id="pulmonaryTable"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Presiones de llenado y gradientes</h2>
+      <div id="fillingTable"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Interpretación integrada</h2>
+      <div id="interpretation"></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="section-title"><h2>Texto para curso clínico / informe</h2><span class="pill violet">copiable</span></div>
+      <div id="copyText" class="copybox"></div>
+      <button onclick="copySummary()">Copiar resumen</button>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Notas, fórmulas y límites</h2>
+      <div class="formula">
+BSA = √(talla[cm] × peso[kg] / 3600)
+PAM ≈ (PAS + 2·PAD) / 3
+Área LVOT = π·(D/2)²
+VS = Área LVOT × VTI LVOT
+GC = VS × FC / 1000
+IC = GC / BSA
+RAP (VCI) = 3 / 8 / 15 mmHg según diámetro y colapso
+RVSP = 4·TRV² + RAP
+PASP = RVSP si no existe obstrucción RVOT/VP
+PAEDP = 4·(PR telediastólica)² + RAP
+mPAP = (PASP/3) + (2·PAEDP/3)
+mPAP alternativa = 0,61·PASP + 2
+PVR (Abbas) = 10·TRV / VTI_RVOT + 0,16 WU
+SVR = 80·(PAM − RAP) / GC
+CPO = PAM·GC / 451
+TAPSE/PASP = TAPSE / PASP
+Qp/Qs = (Área RVOT·VTI RVOT) / (Área LVOT·VTI LVOT)
+PCWP estimada = 1,24·(E/e′ media) + 1,9
+      </div>
+      <p class="muted"><b>Referencias principales:</b> ASE 2025 Right Heart & Pulmonary Hypertension; ASE 2025 Left Ventricular Diastolic Function. PVR ecográfica por fórmula de Abbas. La PVR ecográfica no sustituye el cateterismo derecho y pierde fiabilidad con PVR muy elevadas. La estimación de RAP por VCI es especialmente limitada con ventilación a presión positiva.</p>
+    </div>
+  </section>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+function n(id){const v=parseFloat($(id).value);return Number.isFinite(v)?v:NaN}
+function fmt(x,d=1){return Number.isFinite(x)?x.toFixed(d).replace('.',','):'—'}
+function val(x,unit='',d=1){return Number.isFinite(x)?`${fmt(x,d)}${unit}`:'—'}
+function clsBy(v,cuts){ if(!Number.isFinite(v)) return 'info'; for(const c of cuts){if(v<c[0])return c[1]} return cuts.length?cuts[cuts.length-1][2]||'ok':'info'}
+function metric(name,value,sub=''){return `<div class="metric"><div class="name">${name}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`}
+function row(name,value,note=''){return `<tr><th>${name}</th><td><b>${value}</b>${note?`<div class="hint">${note}</div>`:''}</td></tr>`}
+function pill(text,type='info'){return `<span class="pill ${type}">${text}</span>`}
+function getMAP(){const manual=n('mapManual');if(Number.isFinite(manual)) return manual; const s=n('sbp'),d=n('dbp'); return Number.isFinite(s)&&Number.isFinite(d)?(s+2*d)/3:NaN}
+function getBSA(){const h=n('height'),w=n('weight');return Number.isFinite(h)&&Number.isFinite(w)?Math.sqrt(h*w/3600):NaN}
+function getRAP(){
+  if($('rapMode').value==='manual') return {v:n('rapManual'),note:'manual'};
+  const d=n('ivcD'),c=n('ivcCollapse');
+  if(!Number.isFinite(d)||!Number.isFinite(c)) return {v:NaN,note:'sin datos'};
+  if($('ppv').value==='yes') return {v:8,note:'VCI en presión positiva: estimación incierta; se usa 8 mmHg como valor intermedio'};
+  if(d<=2.1 && c>=50) return {v:3,note:'VCI ≤2,1 cm y colapso ≥50%'};
+  if(d>2.1 && c<50) return {v:15,note:'VCI >2,1 cm y colapso <50%'};
+  return {v:8,note:'patrón indeterminado por VCI'};
+}
+function calcAll(){
+  const bsa=getBSA(), hr=n('hr'), map=getMAP(), sbp=n('sbp'), dbp=n('dbp');
+  const lvD=n('lvotD'), lvVTI=n('lvotVTI');
+  const lvArea=Number.isFinite(lvD)?Math.PI*Math.pow(lvD/2,2):NaN;
+  const sv=Number.isFinite(lvArea)&&Number.isFinite(lvVTI)?lvArea*lvVTI:NaN;
+  const svi=Number.isFinite(sv)&&Number.isFinite(bsa)?sv/bsa:NaN;
+  const co=Number.isFinite(sv)&&Number.isFinite(hr)?sv*hr/1000:NaN;
+  const ci=Number.isFinite(co)&&Number.isFinite(bsa)?co/bsa:NaN;
+  const cpo=Number.isFinite(map)&&Number.isFinite(co)?map*co/451:NaN;
+  const cpoi=Number.isFinite(map)&&Number.isFinite(ci)?map*ci/451:NaN;
+  const rapObj=getRAP(), rap=rapObj.v;
+  const trv=n('trv');
+  const rvsp=Number.isFinite(trv)&&Number.isFinite(rap)?4*trv*trv+rap:NaN;
+  const pasp=$('rvotObstruction').value==='no'?rvsp:NaN;
+  const prEnd=n('prEnd');
+  const paedp=Number.isFinite(prEnd)&&Number.isFinite(rap)?4*prEnd*prEnd+rap:NaN;
+  const mpap13=Number.isFinite(pasp)&&Number.isFinite(paedp)?pasp/3+2*paedp/3:NaN;
+  const mpapChemla=Number.isFinite(pasp)?0.61*pasp+2:NaN;
+  const acc=n('rvotAccT');
+  const mpapAcc1=Number.isFinite(acc)?79-0.45*acc:NaN;
+  const mpapAcc2=Number.isFinite(acc)&&acc<120?90-0.62*acc:NaN;
+  const prEarly=n('prEarly');
+  const mpapPR=Number.isFinite(prEarly)&&Number.isFinite(rap)?4*prEarly*prEarly+rap:NaN;
+  const rvVTI=n('rvotVTI');
+  const pvr=Number.isFinite(trv)&&Number.isFinite(rvVTI)&&rvVTI>0?10*trv/rvVTI+0.16:NaN;
+  const svr=Number.isFinite(map)&&Number.isFinite(rap)&&Number.isFinite(co)&&co>0?80*(map-rap)/co:NaN;
+  const svri=Number.isFinite(map)&&Number.isFinite(rap)&&Number.isFinite(ci)&&ci>0?80*(map-rap)/ci:NaN;
+  const tapse=n('tapse');
+  const coupling=Number.isFinite(tapse)&&Number.isFinite(pasp)&&pasp>0?tapse/pasp:NaN;
+  const papi=Number.isFinite(pasp)&&Number.isFinite(paedp)&&Number.isFinite(rap)&&rap>0?(pasp-paedp)/rap:NaN;
+  const pac=Number.isFinite(sv)&&Number.isFinite(pasp)&&Number.isFinite(paedp)&&pasp>paedp?sv/(pasp-paedp):NaN;
+  const rvD=n('rvotD'); const rvArea=Number.isFinite(rvD)?Math.PI*Math.pow(rvD/2,2):NaN;
+  const qp=Number.isFinite(rvArea)&&Number.isFinite(rvVTI)?rvArea*rvVTI:NaN;
+  const qs=sv;
+  const qpqs=Number.isFinite(qp)&&Number.isFinite(qs)&&qs>0?qp/qs:NaN;
+  const plr=n('plrVTI');
+  const dVTI=Number.isFinite(plr)&&Number.isFinite(lvVTI)&&lvVTI>0?(plr-lvVTI)/lvVTI*100:NaN;
+  const E=n('mitralE'), es=n('eSept'), el=n('eLat');
+  let eAvg=NaN;if(Number.isFinite(es)&&Number.isFinite(el)) eAvg=(es+el)/2; else if(Number.isFinite(es))eAvg=es; else if(Number.isFinite(el))eAvg=el;
+  const ee=Number.isFinite(E)&&Number.isFinite(eAvg)&&eAvg>0?E/eAvg:NaN;
+  const pcwp=Number.isFinite(ee)?1.24*ee+1.9:NaN;
+  const tpg=Number.isFinite(mpap13)&&Number.isFinite(pcwp)?mpap13-pcwp:NaN;
+  const dpg=Number.isFinite(paedp)&&Number.isFinite(pcwp)?paedp-pcwp:NaN;
+  const pp=Number.isFinite(sbp)&&Number.isFinite(dbp)?sbp-dbp:NaN;
+  return {bsa,hr,map,sbp,dbp,pp,lvArea,sv,svi,co,ci,cpo,cpoi,rapObj,rap,trv,rvsp,pasp,paedp,mpap13,mpapChemla,mpapAcc1,mpapAcc2,mpapPR,pvr,svr,svri,tapse,coupling,papi,pac,rvArea,qpqs,dVTI,eAvg,ee,pcwp,tpg,dpg,rvVTI};
+}
+function calc(){
+  const x=calcAll();
+  let alerts='';
+  if($('ppv').value==='yes' && $('rapMode').value==='ivc') alerts+=`<div class="alert warn">RAP por VCI en ventilación a presión positiva es poco fiable. Se muestra 8 mmHg como valor intermedio; usa RAP manual si dispones de una estimación clínica mejor.</div>`;
+  if($('rvotObstruction').value==='yes') alerts+=`<div class="alert danger">Existe/puede existir obstrucción RVOT o valvular pulmonar: RVSP no debe asumirse igual a PASP. Los cálculos dependientes de PASP se omiten.</div>`;
+  if($('trQuality').value==='poor') alerts+=`<div class="alert warn">Señal de IT pobre: RVSP/PASP puede estar infraestimada o no ser interpretable.</div>`;
+  if($('severeTR').value==='yes') alerts+=`<div class="alert warn">IT severa: interpreta TRV, RVSP/PASP y parámetros derivados con cautela e integra signos adicionales.</div>`;
+  if($('rhythm').value==='af' && n('cycles')<5) alerts+=`<div class="alert warn">Ritmo irregular con pocos ciclos promediados. Para Doppler, promedia más ciclos representativos.</div>`;
+  if(Number.isFinite(x.pvr)&&x.pvr>8) alerts+=`<div class="alert danger">PVR ecográfica >8 WU: la fórmula de Abbas pierde fiabilidad en este rango. No usar como sustituto de RHC.</div>`;
+  if($('eeCaveat').value==='yes') alerts+=`<div class="alert warn">La PCWP calculada a partir de E/e′ tiene una limitación clínica seleccionada; úsala solo como dato auxiliar.</div>`;
+  if(!alerts) alerts=`<div class="alert ok">Sin alertas técnicas mayores con los datos introducidos. Sigue siendo una estimación no invasiva y debe integrarse con el estudio ecocardiográfico completo.</div>`;
+  alerts+=`<div style="margin-top:8px">${Number.isFinite(x.ci)&&x.ci<2.2?pill('IC bajo','danger'):pill('IC no bajo por corte 2,2','ok')} ${Number.isFinite(x.svi)&&x.svi<35?pill('SVi <35 mL/m²','warn'):''} ${Number.isFinite(x.pvr)&&x.pvr>2?pill('PVR >2 WU','danger'):''} ${Number.isFinite(x.coupling)&&x.coupling<0.4?pill('TAPSE/PASP <0,4','danger'):Number.isFinite(x.coupling)&&x.coupling<0.55?pill('TAPSE/PASP reducido','warn'):''}</div>`;
+  $('alerts').innerHTML=alerts;
+
+  $('metrics').innerHTML=
+    metric('Volumen sistólico',val(x.sv,' mL',0),`VTI LVOT ${val(n('lvotVTI'),' cm',1)}`)+
+    metric('Índice sistólico',val(x.svi,' mL/m²',0),x.svi<35?'bajo flujo por SVi':'')+
+    metric('Gasto cardíaco',val(x.co,' L/min',2),`FC ${val(x.hr,' lpm',0)}`)+
+    metric('Índice cardíaco',val(x.ci,' L/min/m²',2),x.ci<2.2?'reducido':'')+
+    metric('RAP estimada',val(x.rap,' mmHg',0),x.rapObj.note)+
+    metric('PASP estimada',val(x.pasp,' mmHg',0),Number.isFinite(x.rvsp)?`RVSP ${val(x.rvsp,' mmHg',0)}`:'')+
+    metric('PVR eco',val(x.pvr,' WU',2),Number.isFinite(x.pvr)&&x.pvr>2?'elevada':'Abbas')+
+    metric('TAPSE/PASP',val(x.coupling,' mm/mmHg',2),Number.isFinite(x.coupling)&&x.coupling<0.4?'desacoplamiento marcado':Number.isFinite(x.coupling)&&x.coupling<0.55?'reducido':'');
+
+  $('systemicTable').innerHTML=`<table><tbody>
+    ${row('Superficie corporal (Mosteller)',val(x.bsa,' m²',2))}
+    ${row('PAM',val(x.map,' mmHg',0),Number.isFinite(n('mapManual'))?'manual':'estimada a partir de PAS/PAD')}
+    ${row('Área LVOT',val(x.lvArea,' cm²',2))}
+    ${row('Volumen sistólico',val(x.sv,' mL',1))}
+    ${row('Índice sistólico',val(x.svi,' mL/m²',1),'<35 mL/m² suele utilizarse para definir bajo flujo')}
+    ${row('Gasto cardíaco',val(x.co,' L/min',2))}
+    ${row('Índice cardíaco',val(x.ci,' L/min/m²',2))}
+    ${row('SVR',val(x.svr,' dyn·s·cm⁻⁵',0),'calculada con RAP ecográfica')}
+    ${row('SVRi',val(x.svri,' dyn·s·cm⁻⁵·m²',0))}
+    ${row('Cardiac Power Output',val(x.cpo,' W',2))}
+    ${row('Cardiac Power Index',val(x.cpoi,' W/m²',2))}
+    ${row('ΔVTI con PLR',val(x.dVTI,' %',1),Number.isFinite(x.dVTI)?'interpretar según contexto, ventilación y técnica':'introduce VTI post-PLR para calcularlo')}
+    ${row('Qp/Qs',fmt(x.qpqs,2),Number.isFinite(x.qpqs)?'requiere diámetros y VTI fiables de ambos tractos de salida':'introduce diámetro RVOT para calcularlo')}
+  </tbody></table>`;
+
+  $('pulmonaryTable').innerHTML=`<table><tbody>
+    ${row('RAP',val(x.rap,' mmHg',0),x.rapObj.note)}
+    ${row('RVSP',val(x.rvsp,' mmHg',0),'4·TRV² + RAP')}
+    ${row('PASP',val(x.pasp,' mmHg',0),$('rvotObstruction').value==='yes'?'omitida por posible gradiente RVOT/VP':'se asume igual a RVSP si no existe obstrucción')}
+    ${row('PAEDP',val(x.paedp,' mmHg',0),'4·PR telediastólica² + RAP')}
+    ${row('mPAP — PASP/PAEDP',val(x.mpap13,' mmHg',0),'(PASP/3) + (2·PAEDP/3)')}
+    ${row('mPAP — 0,61·PASP + 2',val(x.mpapChemla,' mmHg',0),'método alternativo')}
+    ${row('mPAP — RVOT AccT',val(x.mpapAcc1,' mmHg',0),'79 − 0,45·AccT')}
+    ${row('mPAP — RVOT AccT <120 ms',val(x.mpapAcc2,' mmHg',0),'90 − 0,62·AccT; solo si AccT <120 ms')}
+    ${row('mPAP — PR precoz',val(x.mpapPR,' mmHg',0),'4·PR precoz² + RAP')}
+    ${row('PVR ecográfica',val(x.pvr,' WU',2),'Abbas: 10·TRV/VTI RVOT + 0,16; >2 WU anormal, >8 WU poco fiable')}
+    ${row('TAPSE/PASP',val(x.coupling,' mm/mmHg',2),'índice de acoplamiento VD-AP; 0,3–0,4 se asocia a desacoplamiento en PH')}
+    ${row('PAPi ecográfico',fmt(x.papi,2),'(PASP − PAEDP)/RAP; extrapolación no invasiva del índice invasivo')}
+    ${row('Compliancia arterial pulmonar',val(x.pac,' mL/mmHg',2),'VS / (PASP − PAEDP); estimación dependiente de las presiones Doppler')}
+  </tbody></table>`;
+
+  $('fillingTable').innerHTML=`<table><tbody>
+    ${row('e′ media',val(x.eAvg,' cm/s',1))}
+    ${row('E/e′ media',fmt(x.ee,1))}
+    ${row('PCWP numérica estimada',val(x.pcwp,' mmHg',1),'1,24·E/e′ + 1,9. No debe sustituir el algoritmo integral de presión de llenado.')}
+    ${row('TPG ecográfico',val(x.tpg,' mmHg',1),'mPAP estimada − PCWP estimada; exploratorio')}
+    ${row('DPG ecográfico',val(x.dpg,' mmHg',1),'PAEDP estimada − PCWP estimada; exploratorio')}
+  </tbody></table>`;
+
+  const items=[];
+  if(Number.isFinite(x.svi)) items.push(x.svi<35?'Bajo flujo por SVi <35 mL/m².':'Volumen sistólico indexado no reducido por el corte de 35 mL/m².');
+  if(Number.isFinite(x.ci)) items.push(x.ci<2.2?'Índice cardíaco reducido (<2,2 L/min/m²).':'Índice cardíaco ≥2,2 L/min/m².');
+  if(Number.isFinite(x.rap)) items.push(x.rap>=15?'Presión auricular derecha elevada.':x.rap<=3?'RAP estimada baja/normal.':'RAP intermedia.');
+  if(Number.isFinite(x.rvsp)) items.push(x.rvsp>=35?'RVSP por encima del rango considerado normal en ASE 2025.':'RVSP no elevada por corte de 35 mmHg.');
+  if(Number.isFinite(x.pvr)) items.push(x.pvr>2?'PVR ecográfica elevada (>2 WU); confirmar invasivamente si la clasificación de PH cambia conducta.':'PVR ecográfica no elevada por corte de 2 WU.');
+  if(Number.isFinite(x.coupling)) items.push(x.coupling<0.4?'TAPSE/PASP compatible con desacoplamiento VD-AP marcado.':x.coupling<0.55?'TAPSE/PASP reducido; integrar con FAC, S′ y strain VD.':'TAPSE/PASP no reducido por el corte de 0,55.');
+  if(Number.isFinite(x.pcwp)) items.push(x.pcwp>15?'PCWP numérica estimada >15 mmHg, con las limitaciones propias de E/e′.':'PCWP numérica estimada ≤15 mmHg, sin excluir elevación de presiones de llenado por otros parámetros.');
+  $('interpretation').innerHTML=items.length?`<ul>${items.map(i=>`<li>${i}</li>`).join('')}</ul><p class="muted">La interpretación final debe integrar calidad Doppler, FEVI, función VD, valvulopatías, respiración/ventilación, ritmo y contexto clínico.</p>`:'<p class="muted">Introduce datos para generar interpretación.</p>';
+
+  const parts=[];
+  if(Number.isFinite(x.sv)) parts.push(`VS ${fmt(x.sv,0)} mL`);
+  if(Number.isFinite(x.svi)) parts.push(`VSi ${fmt(x.svi,0)} mL/m²`);
+  if(Number.isFinite(x.co)) parts.push(`GC ${fmt(x.co,2)} L/min`);
+  if(Number.isFinite(x.ci)) parts.push(`IC ${fmt(x.ci,2)} L/min/m²`);
+  if(Number.isFinite(x.rap)) parts.push(`RAP ${fmt(x.rap,0)} mmHg`);
+  if(Number.isFinite(x.pasp)) parts.push(`PASP ${fmt(x.pasp,0)} mmHg`); else if(Number.isFinite(x.rvsp)) parts.push(`RVSP ${fmt(x.rvsp,0)} mmHg (PASP no asumible por obstrucción RVOT/VP)`);
+  if(Number.isFinite(x.mpap13)) parts.push(`mPAP ${fmt(x.mpap13,0)} mmHg`);
+  if(Number.isFinite(x.pvr)) parts.push(`PVR eco ${fmt(x.pvr,2)} WU`);
+  if(Number.isFinite(x.svr)) parts.push(`SVR ${fmt(x.svr,0)} dyn·s·cm⁻⁵`);
+  if(Number.isFinite(x.coupling)) parts.push(`TAPSE/PASP ${fmt(x.coupling,2)} mm/mmHg`);
+  if(Number.isFinite(x.cpo)) parts.push(`CPO ${fmt(x.cpo,2)} W`);
+  if(Number.isFinite(x.qpqs)) parts.push(`Qp/Qs ${fmt(x.qpqs,2)}`);
+  if(Number.isFinite(x.pcwp)) parts.push(`PCWP eco ${fmt(x.pcwp,1)} mmHg (E/e′)`);
+  $('copyText').textContent=`ETT hemodinámico: ${parts.join(' | ')}.`;
+}
+function copySummary(){navigator.clipboard?.writeText($('copyText').textContent).then(()=>{const b=event?.target;if(b){const old=b.textContent;b.textContent='Copiado';setTimeout(()=>b.textContent=old,1000)}})}
+function loadExample(){
+  $('height').value=170;$('weight').value=75;$('hr').value=105;$('sbp').value=85;$('dbp').value=55;$('mapManual').value='';$('rhythm').value='sinus';$('ppv').value='no';
+  $('lvotD').value=2.0;$('lvotVTI').value=11;$('plrVTI').value=13;$('cycles').value=3;
+  $('rapMode').value='ivc';$('ivcD').value=2.4;$('ivcCollapse').value=20;$('trv').value=3.3;$('prEnd').value=1.8;$('prEarly').value=2.6;$('tapse').value=13;$('rvotAccT').value=75;$('trQuality').value='good';$('rvotObstruction').value='no';$('severeTR').value='no';
+  $('rvotD').value=2.3;$('rvotVTI').value=8;$('mitralE').value=100;$('eSept').value=5;$('eLat').value=7;$('eeCaveat').value='no';calc();
+}
+function clearOptional(){['mapManual','plrVTI','prEarly','rvotD'].forEach(id=>$(id).value='');calc()}
+window.onload=()=>{calc();document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calc));$('rapMode').addEventListener('change',calc)};
+</script>
+</body>
+</html>
